@@ -9,7 +9,13 @@
     "type": "git",
     "url": "git+https://github.com/blackeyetech/koa-bootstraps.git"
   },
-  "keywords": ["besh", "koa", "koa-bap", "bootstrap", "koa-bootstrap"],
+  "keywords": [
+    "besh",
+    "koa",
+    "koa-bap",
+    "bootstrap",
+    "koa-bootstrap"
+  ],
   "author": "Black Eye Technology",
   "license": "MIT",
   "bugs": {
@@ -22,5 +28,6 @@
     "koa-multer": "^1.0.2",
     "koa-pino-logger": "^2.1.3",
     "koa-router": "^7.4.0"
-  }
+  },
+  "version": "1.0.0"
 }
