@@ -1,5 +1,5 @@
 {
-  "name": "koa-bootstraps",
+  "name": "@besh/koa-bootstraps",
   "description": "",
   "main": "basics.js",
   "scripts": {
