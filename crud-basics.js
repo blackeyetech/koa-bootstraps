@@ -63,7 +63,7 @@ module.exports = (http) => {
       if ((value === undefined || value === "") && check.required) {
         let msg = `Missing required field '${name}'`;
 
-        throw new UserError(msg);
+        throw new this.UserError(msg);
       }
 
       if (check.allowed !== undefined) {
@@ -72,14 +72,14 @@ module.exports = (http) => {
             let msg = `'${name}' value '${value}' is not valid. `;
             msg += `Allowed values are [${check.allowed}]`;
 
-            throw new UserError(msg);
+            throw new this.UserError(msg);
           }
         } else {
           if (value !== check.allowed) {
             let msg = `'${name}' value '${value}' is not valid. `;
             msg += `Allowed value is '${check.allowed}'`;
 
-            throw new UserError(msg);
+            throw new this.UserError(msg);
           }
         }
       }
