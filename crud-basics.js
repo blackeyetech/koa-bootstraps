@@ -216,14 +216,8 @@ module.exports = (http) => {
           ctx.type = this.CONTENT_TYPE_XLSX;
           ctx.set("Content-Disposition", `attachment; filename=${data.name}`);
 
-          // Not sure why this is working, but it will do for now
-					let body = new Readable();
-					body._read = function() {};
-
-					ctx.body = body;
-					ctx.respond = false;
-					await data.wb.xlsx.write(ctx.res);
-
+          ctx.status = 200;
+          ctx.body = data.buffer;
           break;
 
         case this.CONTENT_TYPE_JSON:
