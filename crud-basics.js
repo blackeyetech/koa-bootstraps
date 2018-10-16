@@ -15,42 +15,42 @@ const CFG_ORDER_BY_PARAM_DEFAULT = "order";
 const CFG_ORDER_BY_DESC_PARAM_DEFAULT = "order-desc";
 const CFG_MAX_ROWS_LIMIT_DEFAULT = 1000;
 
-module.exports = (http) => {
+module.exports = http => {
   if (http === undefined) {
     throw new Error("Must pass http bap to bootstrap scripts!");
   }
 
   http.log.info("Initialising crud-basics bootstrap script ...");
 
-  http.formatParam = http.getCfg(
-    CFG_FORMAT_PARAM, CFG_FORMAT_PARAM_DEFAULT);
+  http.formatParam = http.getCfg(CFG_FORMAT_PARAM, CFG_FORMAT_PARAM_DEFAULT);
   http.log.info(`Format parameter set to (${http.formatParam})`);
 
-  http.fieldsParam = http.getCfg(
-    CFG_FIELDS_PARAM, CFG_FIELDS_PARAM_DEFAULT);
+  http.fieldsParam = http.getCfg(CFG_FIELDS_PARAM, CFG_FIELDS_PARAM_DEFAULT);
   http.log.info(`Fields parameter set to (${http.fieldsParam})`);
 
   http.orderByParam = http.getCfg(
-    CFG_ORDER_BY_PARAM, CFG_ORDER_BY_PARAM_DEFAULT);
+    CFG_ORDER_BY_PARAM,
+    CFG_ORDER_BY_PARAM_DEFAULT,
+  );
   http.log.info(`Order by parameter set to (${http.orderByParam})`);
 
   http.orderByDescParam = http.getCfg(
-    CFG_ORDER_BY_DESC_PARAM, CFG_ORDER_BY_DESC_PARAM_DEFAULT);
-  http.log.info(
-    `Order by Desc parameter set to (${http.orderByDescParam})`);
+    CFG_ORDER_BY_DESC_PARAM,
+    CFG_ORDER_BY_DESC_PARAM_DEFAULT,
+  );
+  http.log.info(`Order by Desc parameter set to (${http.orderByDescParam})`);
 
   http.maxRowLimit = http.getCfg(
-    CFG_MAX_ROWS_LIMIT, CFG_MAX_ROWS_LIMIT_DEFAULT);
+    CFG_MAX_ROWS_LIMIT,
+    CFG_MAX_ROWS_LIMIT_DEFAULT,
+  );
   http.log.info(`Max row limit to (${http.maxRowLimit})`);
 
   http.CONTENT_TYPE_JSON = "application/json";
-  http.CONTENT_TYPE_XLSX = 
+  http.CONTENT_TYPE_XLSX =
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-  http.acceptContentTypes = [
-    http.CONTENT_TYPE_JSON,
-    http.CONTENT_TYPE_XLSX
-  ];
+  http.acceptContentTypes = [http.CONTENT_TYPE_JSON, http.CONTENT_TYPE_XLSX];
 
   http.getProps = function(data, pattern) {
     let found = {};
@@ -100,7 +100,7 @@ module.exports = (http) => {
     this.log.info(`Adding POST route on ${router.opts.prefix}${path}`);
 
     router.post(path, async (ctx, next) => {
-      let id = await cb(ctx.request.body);
+      let id = await cb(ctx.request.body, ctx.params);
 
       ctx.set("Location", `${ctx.origin}${ctx.url}/${id}`);
       ctx.status = 201;
@@ -109,13 +109,13 @@ module.exports = (http) => {
     });
   };
 
-  http.readQueryStr = function (ctx) {
+  http.readQueryStr = function(ctx) {
     let opts = {};
 
     opts.format = ctx.query[this.formatParam];
 
     if (opts.format !== undefined) {
-      delete ctx.query[this.formatParam]; 
+      delete ctx.query[this.formatParam];
     }
 
     opts.orderBy = ctx.query[this.orderByParam];
@@ -146,7 +146,6 @@ module.exports = (http) => {
       if (typeof fields === "string") {
         fields = fields.split(",");
       }
-
     } else {
       fields = ["*"];
     }
@@ -154,62 +153,58 @@ module.exports = (http) => {
     return { opts, fields };
   };
 
-  http.sendChunkedArray = function (ctx, data) {
-  	return new Promise((resolve, reject) => {
-			let body = new Readable();
-			body._read = function() {};
+  http.sendChunkedArray = function(ctx, data) {
+    return new Promise((resolve, reject) => {
+      let body = new Readable();
+      body._read = function() {};
 
-			ctx.type = 'application/json; charset=utf-8';
-			ctx.body = body;
+      ctx.type = "application/json; charset=utf-8";
+      ctx.body = body;
 
-			body.push("[\n");
+      body.push("[\n");
 
-	    let i = 0;
-	    let cb = async () => {
-	        while (i < data.length) {
-	        	body.push(JSON.stringify(data[i]));
-	        	if (i !== data.length - 1) {
-		        	body.push(",\n");
-		        } else {
-		        	body.push("\n");
-		        }
+      let i = 0;
+      let cb = async () => {
+        while (i < data.length) {
+          body.push(JSON.stringify(data[i]));
+          if (i !== data.length - 1) {
+            body.push(",\n");
+          } else {
+            body.push("\n");
+          }
 
-	          i++;
+          i++;
 
-	          if (i % this.maxRowLimit === 0) {
-	            setImmediate(cb);
-	            return;
-	          }
-	        }
+          if (i % this.maxRowLimit === 0) {
+            setImmediate(cb);
+            return;
+          }
+        }
 
-					body.push("]");
-	        body.push(null);
-	        resolve();
-	      };
+        body.push("]");
+        body.push(null);
+        resolve();
+      };
 
-	    cb();
-	  });
+      cb();
+    });
   };
 
-  http.readRoute = function (router, path, cb, id) {
+  http.readRoute = function(router, path, cb) {
     path = `/${path.replace(/^\/+/, "").replace(/\/+$/, "")}`;
-
-    if (id !== undefined) {
-      path = `${path}/:${id}`;
-    }
 
     this.log.info(`Adding GET route on ${router.opts.prefix}${path}`);
 
     router.get(path, async (ctx, next) => {
       let { opts, fields } = this.readQueryStr(ctx);
 
-      if (id !== undefined) {
-        // Add the id as a critera 
-        ctx.query[id] = ctx.params[id];
-      }
-      
       let accepts = ctx.accepts(this.acceptContentTypes);
-      let data = await cb(fields, ctx.query, opts, accepts);
+      let data = await cb(
+        fields,
+        { ...ctx.query, ...ctx.params },
+        opts,
+        accepts,
+      );
 
       switch (accepts) {
         case this.CONTENT_TYPE_XLSX:
@@ -224,33 +219,29 @@ module.exports = (http) => {
           ctx.type = "application/json; charset=utf-8";
 
           if (Array.isArray(data) && data.length > 1) {
-	          ctx.set("Transfer-Encoding", "chunked");
-  	        await this.sendChunkedArray(ctx, data);
-  	      } else {
-          	ctx.status = 200;
+            ctx.set("Transfer-Encoding", "chunked");
+            await this.sendChunkedArray(ctx, data);
+          } else {
+            ctx.status = 200;
             ctx.body = JSON.stringify(data[0]);
           }
 
           break;
         default:
           ctx.status = 406;
-        };
+      }
 
-    	await next();
+      await next();
     });
   };
 
-  http.updateRoute = function (router, path, cb, id) {
+  http.updateRoute = function(router, path, cb) {
     path = `/${path.replace(/^\/+/, "").replace(/\/+$/, "")}`;
-
-    if (id !== undefined) {
-      path = `${path}/:${id}`;
-    }
 
     this.log.info(`Adding PUT route on ${router.opts.prefix}${path}`);
 
     router.put(path, async (ctx, next) => {
-      await cb(ctx.request.body, ctx.params[id]);
+      await cb(ctx.request.body, ctx.params);
 
       ctx.status = 200;
 
@@ -258,17 +249,13 @@ module.exports = (http) => {
     });
   };
 
-  http.deleteRoute = function (router, path, cb, id) {
+  http.deleteRoute = function(router, path, cb) {
     path = `/${path.replace(/^\/+/, "").replace(/\/+$/, "")}`;
-
-    if (id !== undefined) {
-      path = `${path}/:${id}`;
-    }
 
     this.log.info(`Adding DELETE route on ${router.opts.prefix}${path}`);
 
     router.delete(path, async (ctx, next) => {
-      await cb(ctx.params[id]);
+      await cb(ctx.params);
 
       ctx.status = 200;
 
@@ -277,5 +264,4 @@ module.exports = (http) => {
   };
 
   http.log.info("Finished initialising crud-basics bootstrap script");
-
-}
+};

@@ -1,3 +1,17 @@
+# Version: 1.1.0
+
+## Date: 16-10-2018
+
+Modified helper-basic.js actionRoute() - id parameter should now be part of path.
+
+Modified crud-basics.js createRoute() - id parameter should now be part of path
+
+Modified crud-basics.js readRoute() - id parameter can now be part of path
+
+Modified crud-basics.js updateRoute() - id parameter should now be part of path
+
+Modified crud-basics.js deleteRoute() - id parameter should now be part of path
+
 # Version: 1.0.3
 
 ## Date: 26-07-2018
