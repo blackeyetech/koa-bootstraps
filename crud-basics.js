@@ -158,6 +158,7 @@ module.exports = http => {
       let body = new Readable();
       body._read = function() {};
 
+      ctx.set("Transfer-Encoding", "chunked");
       ctx.type = "application/json; charset=utf-8";
       ctx.body = body;
 
@@ -218,12 +219,13 @@ module.exports = http => {
         case this.CONTENT_TYPE_JSON:
           ctx.type = "application/json; charset=utf-8";
 
-          if (Array.isArray(data) && data.length > 1) {
-            ctx.set("Transfer-Encoding", "chunked");
+          if (data === null) {
+            ctx.status = 404;
+          } else if (Array.isArray(data) && this.maxRowlimit) {
             await this.sendChunkedArray(ctx, data);
           } else {
             ctx.status = 200;
-            ctx.body = JSON.stringify(data[0]);
+            ctx.body = JSON.stringify(data);
           }
 
           break;

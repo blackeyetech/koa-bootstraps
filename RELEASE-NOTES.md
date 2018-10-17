@@ -1,3 +1,9 @@
+# Version: 1.2.0
+
+## Date: 17-10-2018
+
+Modified crud-basics.js readRoute() - it no longers assumes an array is returned
+
 # Version: 1.1.0
 
 ## Date: 16-10-2018
