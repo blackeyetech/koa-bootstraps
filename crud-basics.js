@@ -257,7 +257,7 @@ module.exports = http => {
     this.log.info(`Adding DELETE route on ${router.opts.prefix}${path}`);
 
     router.delete(path, async (ctx, next) => {
-      await cb(ctx.params);
+      await cb(ctx.request.body, ctx.params);
 
       ctx.status = 200;
 

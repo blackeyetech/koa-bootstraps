@@ -1,3 +1,9 @@
+# Version: 1.3.0
+
+## Date: 25-10-2018
+
+Modified crud-basics.js deleteRoute() - the body of the request is now passed to callback
+
 # Version: 1.2.0
 
 ## Date: 17-10-2018
