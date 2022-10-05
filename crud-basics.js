@@ -15,7 +15,7 @@ const CFG_ORDER_BY_PARAM_DEFAULT = "order";
 const CFG_ORDER_BY_DESC_PARAM_DEFAULT = "order-desc";
 const CFG_MAX_ROWS_LIMIT_DEFAULT = 1000;
 
-module.exports = http => {
+module.exports = (http) => {
   if (http === undefined) {
     throw new Error("Must pass http bap to bootstrap scripts!");
   }
@@ -30,29 +30,34 @@ module.exports = http => {
 
   http.orderByParam = http.getCfg(
     CFG_ORDER_BY_PARAM,
-    CFG_ORDER_BY_PARAM_DEFAULT,
+    CFG_ORDER_BY_PARAM_DEFAULT
   );
   http.log.info(`Order by parameter set to (${http.orderByParam})`);
 
   http.orderByDescParam = http.getCfg(
     CFG_ORDER_BY_DESC_PARAM,
-    CFG_ORDER_BY_DESC_PARAM_DEFAULT,
+    CFG_ORDER_BY_DESC_PARAM_DEFAULT
   );
   http.log.info(`Order by Desc parameter set to (${http.orderByDescParam})`);
 
   http.maxRowLimit = http.getCfg(
     CFG_MAX_ROWS_LIMIT,
-    CFG_MAX_ROWS_LIMIT_DEFAULT,
+    CFG_MAX_ROWS_LIMIT_DEFAULT
   );
   http.log.info(`Max row limit to (${http.maxRowLimit})`);
 
   http.CONTENT_TYPE_JSON = "application/json";
   http.CONTENT_TYPE_XLSX =
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  http.CONTENT_TYPE_CSV = "text/csv";
 
-  http.acceptContentTypes = [http.CONTENT_TYPE_JSON, http.CONTENT_TYPE_XLSX];
+  http.acceptContentTypes = [
+    http.CONTENT_TYPE_JSON,
+    http.CONTENT_TYPE_XLSX,
+    http.CONTENT_TYPE_CSV,
+  ];
 
-  http.getProps = function(data, pattern) {
+  http.getProps = function (data, pattern) {
     let found = {};
 
     for (let prop of Object.entries(pattern)) {
@@ -94,7 +99,7 @@ module.exports = http => {
     return found;
   };
 
-  http.createRoute = function(router, path, cb) {
+  http.createRoute = function (router, path, cb) {
     path = `/${path.replace(/^\/+/, "").replace(/\/+$/, "")}`;
 
     this.log.info(`Adding POST route on ${router.opts.prefix}${path}`);
@@ -109,7 +114,7 @@ module.exports = http => {
     });
   };
 
-  http.readQueryStr = function(ctx) {
+  http.readQueryStr = function (ctx) {
     let opts = {};
 
     opts.format = ctx.query[this.formatParam];
@@ -153,10 +158,10 @@ module.exports = http => {
     return { opts, fields };
   };
 
-  http.sendChunkedArray = function(ctx, data) {
+  http.sendChunkedArray = function (ctx, data) {
     return new Promise((resolve, reject) => {
       let body = new Readable();
-      body._read = function() {};
+      body._read = function () {};
 
       ctx.set("Transfer-Encoding", "chunked");
       ctx.type = "application/json; charset=utf-8";
@@ -191,7 +196,7 @@ module.exports = http => {
     });
   };
 
-  http.readRoute = function(router, path, cb) {
+  http.readRoute = function (router, path, cb) {
     path = `/${path.replace(/^\/+/, "").replace(/\/+$/, "")}`;
 
     this.log.info(`Adding GET route on ${router.opts.prefix}${path}`);
@@ -204,12 +209,19 @@ module.exports = http => {
         fields,
         { ...ctx.query, ...ctx.params },
         opts,
-        accepts,
+        accepts
       );
 
       switch (accepts) {
         case this.CONTENT_TYPE_XLSX:
           ctx.type = this.CONTENT_TYPE_XLSX;
+          ctx.set("Content-Disposition", `attachment; filename=${data.name}`);
+
+          ctx.status = 200;
+          ctx.body = data.buffer;
+          break;
+        case this.CONTENT_TYPE_CSV:
+          ctx.type = this.CONTENT_TYPE_CSV;
           ctx.set("Content-Disposition", `attachment; filename=${data.name}`);
 
           ctx.status = 200;
@@ -237,7 +249,7 @@ module.exports = http => {
     });
   };
 
-  http.updateRoute = function(router, path, cb) {
+  http.updateRoute = function (router, path, cb) {
     path = `/${path.replace(/^\/+/, "").replace(/\/+$/, "")}`;
 
     this.log.info(`Adding PUT route on ${router.opts.prefix}${path}`);
@@ -251,7 +263,7 @@ module.exports = http => {
     });
   };
 
-  http.deleteRoute = function(router, path, cb) {
+  http.deleteRoute = function (router, path, cb) {
     path = `/${path.replace(/^\/+/, "").replace(/\/+$/, "")}`;
 
     this.log.info(`Adding DELETE route on ${router.opts.prefix}${path}`);
