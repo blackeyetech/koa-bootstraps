@@ -105,7 +105,7 @@ module.exports = (http) => {
     this.log.info(`Adding POST route on ${router.opts.prefix}${path}`);
 
     router.post(path, async (ctx, next) => {
-      let id = await cb(ctx.request.body, ctx.params);
+      let id = await cb(ctx.request.body, ctx.params, ctx.request);
 
       ctx.set("Location", `${ctx.origin}${ctx.url}/${id}`);
       ctx.status = 201;
@@ -209,7 +209,8 @@ module.exports = (http) => {
         fields,
         { ...ctx.query, ...ctx.params },
         opts,
-        accepts
+        accepts,
+        ctx.request
       );
 
       switch (accepts) {
@@ -255,7 +256,7 @@ module.exports = (http) => {
     this.log.info(`Adding PUT route on ${router.opts.prefix}${path}`);
 
     router.put(path, async (ctx, next) => {
-      await cb(ctx.request.body, ctx.params);
+      await cb(ctx.request.body, ctx.params, ctx.request);
 
       ctx.status = 200;
 
@@ -269,7 +270,7 @@ module.exports = (http) => {
     this.log.info(`Adding DELETE route on ${router.opts.prefix}${path}`);
 
     router.delete(path, async (ctx, next) => {
-      await cb(ctx.request.body, ctx.params);
+      await cb(ctx.request.body, ctx.params, ctx.request);
 
       ctx.status = 200;
 
